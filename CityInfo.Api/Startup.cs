@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CityInfo.Api.Entity;
+using CityInfo.Api.Models;
 using CityInfo.Api.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -48,6 +49,7 @@ namespace CityInfo.Api
 #else
             services.AddTransient<IMailServices,CloudMailServices>();
 #endif
+            services.AddScoped<ICityRepository, CityRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -65,6 +67,14 @@ namespace CityInfo.Api
             //to show http status code in browser
             app.UseStatusCodePages();
             app.UseMvc();
+            AutoMapper.Mapper.Initialize(config =>
+            {
+                config.CreateMap<Entity.City,Models.CityWithoutPointsOfInterest>();
+                config.CreateMap<Entity.City, Models.City>();
+                config.CreateMap<Entity.PointsOfInterest, Models.PointsOfInterest>();
+                config.CreateMap<Models.CreateUpdatePointsOfInterest, Entity.PointsOfInterest>();
+                config.CreateMap<Entity.PointsOfInterest, Models.CreateUpdatePointsOfInterest>();
+            });
             //app.Run(async (context) =>
             //{
             //    await context.Response.WriteAsync("Hello World!");

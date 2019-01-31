@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using CityInfo.Api.Models;
 using CityInfo.Api.Services;
 using Microsoft.AspNetCore.JsonPatch;
@@ -17,10 +18,12 @@ namespace CityInfo.Api.Controllers
     {
         private ILogger<PointsOfInterestController> logger;
         private IMailServices mail;
-        public PointsOfInterestController(ILogger<PointsOfInterestController> _logger,IMailServices _mail)
+        ICityRepository cityRepository;
+        public PointsOfInterestController(ILogger<PointsOfInterestController> _logger,IMailServices _mail,ICityRepository _cityRepository)
         {
             logger = _logger;
             mail = _mail;
+            cityRepository = _cityRepository;
         }
         //return childern of the main object
         [HttpGet("{cityId}/pointsOfInterest")]
@@ -28,14 +31,14 @@ namespace CityInfo.Api.Controllers
         {
             try
             {
-                throw new Exception("Exception");
-                var city = CityMock.Current.Cities.FirstOrDefault(c => c.Id == cityId);
-                if (city == null)
+                if (!cityRepository.CityExist(cityId))
                 {
                     logger.LogInformation($"city with {cityId} doesn't exist");
                     return NotFound();
                 }
-                return  Ok(city.PointsOfInterest);
+                var pointsofinterest = cityRepository.GetPointsOfInterests(cityId);
+                var results = Mapper.Map<List<PointsOfInterest>>(pointsofinterest);
+                return  Ok(results);
             }
             catch (Exception ex)
             {
@@ -48,13 +51,13 @@ namespace CityInfo.Api.Controllers
         [HttpGet("{cityId}/pointsOfInterest/{id}")]
         public IActionResult GetPointOfInterest(int cityId,int id)
         {
-            var city = CityMock.Current.Cities.FirstOrDefault(c => c.Id == cityId);
-            if (city == null)
+            if (!cityRepository.CityExist(cityId))
                 return NotFound();
-            var pointOfInterest = city.PointsOfInterest.FirstOrDefault(p => p.Id == id);
-            if (pointOfInterest == null)
+            var pointsodinterest = cityRepository.GetPointsOfInterest(cityId, id);
+            if (pointsodinterest == null)
                 return NotFound();
-            return  Ok(pointOfInterest);
+            var result = Mapper.Map<PointsOfInterest>(pointsodinterest);
+            return Ok(result);
         }
         //Create PointOfInterest
         [HttpPost("{cityId}/pointsOfInterest",Name ="pointOfInterest")]
@@ -67,18 +70,14 @@ namespace CityInfo.Api.Controllers
             //check validation
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var city = CityMock.Current.Cities.FirstOrDefault(c => c.Id == cityId);
-            if (city == null)
+            if (!cityRepository.CityExist(cityId))
                 return NotFound();
-            var id = CityMock.Current.Cities.SelectMany(p=>p.PointsOfInterest).Max(x=>x.Id);
-            var point = new PointsOfInterest
-            {
-                Id = ++id,
-                Name = createPointsOfInterest.Name,
-                Description = createPointsOfInterest.Description
-            };
-            city.PointsOfInterest.Add(point);
-            return CreatedAtRoute("pointOfInterest",new {cityId=cityId,id=point.Id},point);
+            var point = Mapper.Map<Entity.PointsOfInterest>(createPointsOfInterest);
+            cityRepository.CreatePointOfInterest(cityId,point);
+            if (!cityRepository.Save())
+                return StatusCode(500, "proplem happend whern creating object");
+            var created = Mapper.Map<PointsOfInterest>(point);
+            return CreatedAtRoute("pointOfInterest",new {cityId=cityId,id=created.Id},created);
         }
         //fully update pointOfInterest
         [HttpPut("{cityId}/pointsOfInterest/{id}")]
@@ -91,14 +90,14 @@ namespace CityInfo.Api.Controllers
             //check validation
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var city = CityMock.Current.Cities.FirstOrDefault(c => c.Id == cityId);
-            if (city == null)
+            if (!cityRepository.CityExist(cityId))
                 return NotFound();
-            var pointOfInterest = city.PointsOfInterest.FirstOrDefault(p => p.Id == id);
+            var pointOfInterest = cityRepository.GetPointsOfInterest(cityId,id);
             if (pointOfInterest == null)
                 return NotFound();
-            pointOfInterest.Name = createUpdatePointsOfInterest.Name;
-            pointOfInterest.Description = createUpdatePointsOfInterest.Description;
+            Mapper.Map(createUpdatePointsOfInterest, pointOfInterest);
+            if (!cityRepository.Save())
+                return StatusCode(500, "proplem happend whern creating object");
             return NoContent();
         }
         //partially update
@@ -107,13 +106,12 @@ namespace CityInfo.Api.Controllers
         {
             if (jsonPatch == null)
                 return BadRequest();
-            var city = CityMock.Current.Cities.FirstOrDefault(c => c.Id == cityId);
-            if (city == null)
+            if (!cityRepository.CityExist(cityId))
                 return NotFound();
-            var pointOfInterest = city.PointsOfInterest.FirstOrDefault(p => p.Id == id);
+            var pointOfInterest = cityRepository.GetPointsOfInterest(cityId,id);
             if (pointOfInterest == null)
                 return NotFound();
-            var pointOfInterestPatch = new CreateUpdatePointsOfInterest { Name = pointOfInterest.Name, Description = pointOfInterest.Description };
+            var pointOfInterestPatch = Mapper.Map<CreateUpdatePointsOfInterest>(pointOfInterest);
             jsonPatch.ApplyTo(pointOfInterestPatch, ModelState);
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -122,22 +120,24 @@ namespace CityInfo.Api.Controllers
             TryValidateModel(pointOfInterestPatch);
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            pointOfInterest.Name = pointOfInterestPatch.Name;
-            pointOfInterest.Description = pointOfInterestPatch.Description;
+            Mapper.Map(pointOfInterestPatch,pointOfInterest);
+            if (!cityRepository.Save())
+                return StatusCode(500, "proplem happend whern creating object");
             return NoContent();
         }
         //Delete ointOfInterest
         [HttpDelete("{cityId}/pointsOfInterest/{id}")]
         public IActionResult Delete(int cityId, int id)
         {
-            var city = CityMock.Current.Cities.FirstOrDefault(c => c.Id == cityId);
-            if (city == null)
+            if (!cityRepository.CityExist(cityId))
                 return NotFound();
-            var pointOfInterest = city.PointsOfInterest.FirstOrDefault(p => p.Id == id);
+            var pointOfInterest = cityRepository.GetPointsOfInterest(cityId,id);
             if (pointOfInterest == null)
                 return NotFound();
-            city.PointsOfInterest.Remove(pointOfInterest);
+            cityRepository.DeletePointOfInterest(pointOfInterest);
             mail.Send("delete",$"Point of name = {pointOfInterest.Name} deleted");
+            if (!cityRepository.Save())
+                return StatusCode(500, "proplem happend whern creating object");
             return NoContent();
         }
     }
