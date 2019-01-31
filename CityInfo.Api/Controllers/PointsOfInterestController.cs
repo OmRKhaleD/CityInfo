@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using CityInfo.Api.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -13,14 +14,32 @@ namespace CityInfo.Api.Controllers
     [Route("api/cities")]
     public class PointsOfInterestController : Controller
     {
+        private ILogger<PointsOfInterestController> logger;
+        public PointsOfInterestController(ILogger<PointsOfInterestController> _logger)
+        {
+            logger = _logger;
+        }
         //return childern of the main object
         [HttpGet("{cityId}/pointsOfInterest")]
        public IActionResult GetPointsOfInterest(int cityId)
         {
-            var city = CityMock.Current.Cities.FirstOrDefault(c => c.Id == cityId);
-            if (city == null)
-                return NotFound();
-            return  Ok(city.PointsOfInterest);
+            try
+            {
+                throw new Exception("Exception");
+                var city = CityMock.Current.Cities.FirstOrDefault(c => c.Id == cityId);
+                if (city == null)
+                {
+                    logger.LogInformation($"city with {cityId} doesn't exist");
+                    return NotFound();
+                }
+                return  Ok(city.PointsOfInterest);
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical($"exception happend when getting data with {cityId}", ex);
+                return StatusCode(500, "proplem happend when fetching data");
+            }
+
         }
         //return a specific child of the specific object
         [HttpGet("{cityId}/pointsOfInterest/{id}")]
