@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace CityInfo.Api.Models
 {
-    public class PointsOfInterest
+    public class PointsOfInterestVM
     {
         public int Id { get; set; }
         public string Name { get; set; }

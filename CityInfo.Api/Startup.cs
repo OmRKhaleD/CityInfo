@@ -69,11 +69,13 @@ namespace CityInfo.Api
             app.UseMvc();
             AutoMapper.Mapper.Initialize(config =>
             {
-                config.CreateMap<Entity.City,Models.CityWithoutPointsOfInterest>();
-                config.CreateMap<Entity.City, Models.City>();
-                config.CreateMap<Entity.PointsOfInterest, Models.PointsOfInterest>();
-                config.CreateMap<Models.CreateUpdatePointsOfInterest, Entity.PointsOfInterest>();
-                config.CreateMap<Entity.PointsOfInterest, Models.CreateUpdatePointsOfInterest>();
+                config.CreateMap<Entity.City,Models.CityWithoutPointsOfInterestVM>();
+                config.CreateMap<Entity.City, Models.CityVM>();
+                config.CreateMap<Entity.PointsOfInterest, Models.PointsOfInterestVM>();
+                config.CreateMap<Models.CityWithoutPointsOfInterestVM, Entity.PointsOfInterest>();
+                config.CreateMap<Entity.PointsOfInterest, Models.CreateUpdateCityOrPointsOfInterestVM>();
+                config.CreateMap<Models.CreateUpdateCityOrPointsOfInterestVM,Entity.City>();
+                config.CreateMap<Entity.City, Models.CreateUpdateCityOrPointsOfInterestVM>();
             });
             //app.Run(async (context) =>
             //{

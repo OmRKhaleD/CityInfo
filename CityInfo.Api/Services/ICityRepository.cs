@@ -15,6 +15,8 @@ namespace CityInfo.Api.Services
         bool CityExist(int id);
         void CreatePointOfInterest(int cityId,PointsOfInterest pointsOfInterest);
         void DeletePointOfInterest(PointsOfInterest pointsOfInterest);
+        void CreateCity(City city);
+        void Deletecity(City city);
         bool Save();
     }
 }

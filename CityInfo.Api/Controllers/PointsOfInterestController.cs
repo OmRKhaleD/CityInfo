@@ -37,7 +37,7 @@ namespace CityInfo.Api.Controllers
                     return NotFound();
                 }
                 var pointsofinterest = cityRepository.GetPointsOfInterests(cityId);
-                var results = Mapper.Map<List<PointsOfInterest>>(pointsofinterest);
+                var results = Mapper.Map<List<PointsOfInterestVM>>(pointsofinterest);
                 return  Ok(results);
             }
             catch (Exception ex)
@@ -56,12 +56,12 @@ namespace CityInfo.Api.Controllers
             var pointsodinterest = cityRepository.GetPointsOfInterest(cityId, id);
             if (pointsodinterest == null)
                 return NotFound();
-            var result = Mapper.Map<PointsOfInterest>(pointsodinterest);
+            var result = Mapper.Map<PointsOfInterestVM>(pointsodinterest);
             return Ok(result);
         }
         //Create PointOfInterest
         [HttpPost("{cityId}/pointsOfInterest",Name ="pointOfInterest")]
-        public IActionResult Create(int cityId,[FromBody]CreateUpdatePointsOfInterest createPointsOfInterest)
+        public IActionResult Create(int cityId,[FromBody]CreateUpdateCityOrPointsOfInterestVM createPointsOfInterest)
         {
             if (createPointsOfInterest == null)
                 return BadRequest();
@@ -76,12 +76,12 @@ namespace CityInfo.Api.Controllers
             cityRepository.CreatePointOfInterest(cityId,point);
             if (!cityRepository.Save())
                 return StatusCode(500, "proplem happend whern creating object");
-            var created = Mapper.Map<PointsOfInterest>(point);
+            var created = Mapper.Map<PointsOfInterestVM>(point);
             return CreatedAtRoute("pointOfInterest",new {cityId=cityId,id=created.Id},created);
         }
         //fully update pointOfInterest
         [HttpPut("{cityId}/pointsOfInterest/{id}")]
-        public IActionResult FullyUpdate(int cityId,int id,[FromBody]CreateUpdatePointsOfInterest createUpdatePointsOfInterest)
+        public IActionResult FullyUpdate(int cityId,int id,[FromBody]CreateUpdateCityOrPointsOfInterestVM createUpdatePointsOfInterest)
         {
             if (createUpdatePointsOfInterest == null)
                 return BadRequest();
@@ -102,7 +102,7 @@ namespace CityInfo.Api.Controllers
         }
         //partially update
         [HttpPatch("{cityId}/pointsOfInterest/{id}")]
-        public IActionResult PartiallyUpdate(int cityId,int id,[FromBody] JsonPatchDocument<CreateUpdatePointsOfInterest> jsonPatch)
+        public IActionResult PartiallyUpdate(int cityId,int id,[FromBody] JsonPatchDocument<CreateUpdateCityOrPointsOfInterestVM> jsonPatch)
         {
             if (jsonPatch == null)
                 return BadRequest();
@@ -111,7 +111,7 @@ namespace CityInfo.Api.Controllers
             var pointOfInterest = cityRepository.GetPointsOfInterest(cityId,id);
             if (pointOfInterest == null)
                 return NotFound();
-            var pointOfInterestPatch = Mapper.Map<CreateUpdatePointsOfInterest>(pointOfInterest);
+            var pointOfInterestPatch = Mapper.Map<CreateUpdateCityOrPointsOfInterestVM>(pointOfInterest);
             jsonPatch.ApplyTo(pointOfInterestPatch, ModelState);
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -125,7 +125,7 @@ namespace CityInfo.Api.Controllers
                 return StatusCode(500, "proplem happend whern creating object");
             return NoContent();
         }
-        //Delete ointOfInterest
+        //Delete pointOfInterest
         [HttpDelete("{cityId}/pointsOfInterest/{id}")]
         public IActionResult Delete(int cityId, int id)
         {

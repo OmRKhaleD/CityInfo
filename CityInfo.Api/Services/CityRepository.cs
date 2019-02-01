@@ -55,5 +55,15 @@ namespace CityInfo.Api.Services
         {
             context.PointsOfInterest.Remove(pointsOfInterest); 
         }
+
+        public void CreateCity(City city)
+        {
+            context.City.Add(city);
+        }
+
+        public void Deletecity(City city)
+        {
+            context.City.Remove(city);
+        }
     }
 }

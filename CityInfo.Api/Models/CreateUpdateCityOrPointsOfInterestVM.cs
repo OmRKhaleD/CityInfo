@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CityInfo.Api.Models
 {
-    public class CreateUpdatePointsOfInterest
+    public class CreateUpdateCityOrPointsOfInterestVM
     {
         [Required(ErrorMessage ="Name can not be wempty")]
         [MaxLength(50)]
